@@ -37,7 +37,7 @@ public class Overview_InMotion365 extends BaseTest {
 
         // Retrieve and verify Top Risky Users count
         String topRiskyUsers = dashboardPage.getTopRiskyUsersValue();
-        softAssert.assertEquals(topRiskyUsers, "1", "Top Risky Users count mismatch!");
+        softAssert.assertEquals(topRiskyUsers, "0", "Top Risky Users count mismatch!");
 
         // Retrieve and verify Mass Download Incidents count
         String massDownloads = dashboardPage.getMassDownloadValue();

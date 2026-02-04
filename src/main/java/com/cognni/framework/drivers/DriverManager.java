@@ -7,30 +7,33 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 
 public class DriverManager {
 
-    // using ThreadLocal to support parallel execution
     private static ThreadLocal<WebDriver> driver = new ThreadLocal<>();
 
-    // function to initialize WebDriver based on browser type
+    // Set driver based on browser name string
     public static void setDriver(String browser) {
         if (browser.equalsIgnoreCase("chrome")) {
             WebDriverManager.chromedriver().setup();
             driver.set(new ChromeDriver());
         } else if (browser.equalsIgnoreCase("firefox")) {
             WebDriverManager.firefoxdriver().setup();
+            // WebDriverManager.firefoxdriver().clearDriverCache().setup();
             driver.set(new FirefoxDriver());
         }
     }
 
-    // function to get the WebDriver instance
+    // Overloaded method to set an existing WebDriver instance into ThreadLocal
+    public static void setDriver(WebDriver driverInstance) {
+        driver.set(driverInstance);
+    }
+
     public static WebDriver getDriver() {
         return driver.get();
     }
 
-    // function to quit the WebDriver instance
     public static void quitDriver() {
         if (driver.get() != null) {
             driver.get().quit();
-            driver.remove();
+            driver.remove(); // Vital for thread safety in parallel execution
         }
     }
 }

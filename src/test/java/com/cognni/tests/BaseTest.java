@@ -1,7 +1,8 @@
 package com.cognni.tests;
 
 import com.cognni.framework.drivers.DriverManager;
-
+import com.cognni.framework.utils.Helpers;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,80 +10,66 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-//import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
-//import com.cognni.framework.utils.Helpers;
 
 public class BaseTest {
-    // protected driver so that subclasses can access it
     protected WebDriver driver;
-    // to store url with token
+    // Shared static variable to store the session URL with JWT token across test
+    // classes
     protected static String dashboardUrlWithToken;
 
-    // run before each test method
     @BeforeMethod
-    @Parameters("browser") // get browser parameter from testng.xml
-    /*
-     * public void setUp(@Optional("chrome") String browser) {
-     * // initialize WebDriver based on browser parameter
-     * DriverManager.setDriver(browser);
-     * 
-     * // get the WebDriver instance
-     * driver = DriverManager.getDriver();
-     * 
-     * // maximize window and navigate to base URL
-     * driver.manage().window().maximize();
-     * driver.get(Helpers.getValue("baseUrl"));
-     * 
-     * }
-     */
-
+    @Parameters("browser")
     public void setUp(String browser) {
         boolean isServer = System.getenv("GITHUB_ACTIONS") != null;
 
         if (browser.equalsIgnoreCase("chrome")) {
+            WebDriverManager.chromedriver().setup();
             ChromeOptions options = new ChromeOptions();
             if (isServer) {
-                options.addArguments("--headless=new");
-                options.addArguments("--no-sandbox");
-                options.addArguments("--disable-dev-shm-usage");
-                options.addArguments("--window-size=1920,1080");
+                options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage",
+                        "--window-size=1920,1080");
             }
             driver = new ChromeDriver(options);
         } else if (browser.equalsIgnoreCase("firefox")) {
+            WebDriverManager.firefoxdriver().setup();
             FirefoxOptions options = new FirefoxOptions();
             if (isServer) {
-                options.addArguments("-headless"); // Firefox dùng 1 dấu gạch ngang
-                options.addArguments("--width=1920");
-                options.addArguments("--height=1080");
+                options.addArguments("-headless", "--width=1920", "--height=1080");
             }
             driver = new FirefoxDriver(options);
         }
 
+        // Sync the driver instance with DriverManager for thread-safe access
+        DriverManager.setDriver(driver);
+
         driver.manage().window().maximize();
+        driver.get(Helpers.getValue("baseUrl"));
     }
 
+    // Getter method used by TestListener to capture screenshots on failure
     public WebDriver getDriver() {
         return this.driver;
     }
 
+    // Capture the current URL containing the session token
     public void storeSessionUrl() {
-        // get current URL with token
         dashboardUrlWithToken = driver.getCurrentUrl();
     }
 
+    // Navigate directly to the dashboard using the stored token URL
     public void goToDashboardViaStoredUrl() {
         if (dashboardUrlWithToken != null) {
             driver.get(dashboardUrlWithToken);
         } else {
-            throw new IllegalStateException("No stored dashboard URL with token found.");
+            throw new IllegalStateException(
+                    "Pre-condition failed: No dashboard URL with token found. Run MSLoginTest first.");
         }
     }
 
-    // run after each test method
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        // quit the WebDriver instance
+        // Cleanup the driver and remove the ThreadLocal reference
         DriverManager.quitDriver();
     }
 }

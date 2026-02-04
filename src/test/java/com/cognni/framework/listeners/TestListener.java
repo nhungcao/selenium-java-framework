@@ -9,17 +9,20 @@ import org.testng.ITestResult;
 import com.cognni.tests.BaseTest;
 
 public class TestListener implements ITestListener {
-    // this function is called when a test fails
+
     @Override
     public void onTestFailure(ITestResult result) {
-        // get driver from BaseTest
         Object testClass = result.getInstance();
-        WebDriver driver = ((BaseTest) testClass).getDriver();
 
-        // take screenshot and attach to Allure report
-        if (driver != null) {
-            System.out.println("Screeshot captured for test case: " + result.getName());
-            saveScreenshotPNG(driver);
+        // Ensure the test class extends BaseTest before casting
+        if (testClass instanceof BaseTest) {
+            WebDriver driver = ((BaseTest) testClass).getDriver();
+
+            if (driver != null) {
+                System.out.println("Screenshot captured for test case: " + result.getName());
+                saveScreenshotPNG(driver);
+                saveTextLog(result.getName() + " failed. Screenshot attached to Allure.");
+            }
         }
     }
 
@@ -28,4 +31,8 @@ public class TestListener implements ITestListener {
         return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
     }
 
+    @Attachment(value = "Stacktrace Log", type = "text/plain")
+    public static String saveTextLog(String message) {
+        return message;
+    }
 }

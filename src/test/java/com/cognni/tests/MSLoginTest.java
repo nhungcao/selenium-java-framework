@@ -1,8 +1,8 @@
 package com.cognni.tests;
 
-import com.cognni.framework.utils.Helpers;
 import com.cognni.framework.pages.DashboardPage;
 import com.cognni.framework.pages.MSLoginPage;
+import com.cognni.framework.utils.Helpers;
 
 import java.time.Duration;
 
@@ -13,12 +13,12 @@ import org.testng.annotations.Test;
 
 public class MSLoginTest extends BaseTest {
 
-    @Test(description = "Verify MSFT SSO with Fluent Interface")
+    @Test(description = "Verify MSFT SSO Login")
     public void testMSFTLoginFluent() {
+        // Use the 'driver' initialized in BaseTest.setUp()
         MSLoginPage loginPage = new MSLoginPage(driver);
         DashboardPage dashboardPage = new DashboardPage(driver);
 
-        // Perform login using fluent interface
         loginPage.clickLoginWithMicrosoft()
                 .enterEmail(Helpers.getValue("msft_user"))
                 .clickNext()
@@ -26,14 +26,14 @@ public class MSLoginTest extends BaseTest {
                 .clickSignIn()
                 .handleStaySignedIn(false);
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        wait.until(ExpectedConditions.urlContains("?token="));
+        // Wait until the URL changes to include the token
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.urlContains("token="));
 
-        // Store the session URL with token for reuse
+        // Store the URL with JWT token for subsequent test classes
         storeSessionUrl();
 
-        // Verify successful login by checking dashboard title
         String dashboardTitle = dashboardPage.getDashboardTitle();
-        Assert.assertTrue(dashboardTitle.contains("Overview of"), "Login failed: dashboard title mismatch.");
+        Assert.assertTrue(dashboardTitle.contains("Overview of"), "Dashboard title did not match.");
     }
 }

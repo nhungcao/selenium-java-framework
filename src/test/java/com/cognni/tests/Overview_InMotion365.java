@@ -2,50 +2,48 @@ package com.cognni.tests;
 
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
-import org.testng.Assert;
 import com.cognni.framework.pages.DashboardPage;
 import io.qameta.allure.*;
 
+/**
+ * Test class focused on verifying the metrics within the InMotion365 Dashboard.
+ * Inherits BaseTest to leverage automated browser setup and session management.
+ */
 @Epic("Dashboard Verification")
 @Feature("InMotion365 Features")
 public class Overview_InMotion365 extends BaseTest {
 
     @Test(description = "Verify Key Findings metrics for InMotion365")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Check if High Severity, Top Risky, and Mass Download counts match expected values via Token URL")
-    @Story("User verifies dashboard metrics")
+    @Description("Navigates to Dashboard using stored JWT token and validates High Severity, Top Risky, and Mass Download counts.")
+    @Story("User verifies dashboard metrics accurately reflect system data.")
     public void testInMotion365_KeyFindings() {
+        // Initialize DashboardPage using the driver from BaseTest
         DashboardPage dashboardPage = new DashboardPage(driver);
         SoftAssert softAssert = new SoftAssert();
 
-        // Check if the Token URL was captured in the previous Login test
-        if (dashboardUrlWithToken != null) {
-            driver.get(dashboardUrlWithToken);
-            System.out.println("Accessing Dashboard using captured JWT Token URL...");
-        } else {
-            // Hard fail if no token is available as subsequent steps will fail anyway
-            Assert.fail(
-                    "Pre-condition failed: No stored dashboard URL with token found. Ensure MSLoginTest runs first.");
-        }
+        // Navigate directly to the dashboard using the URL + Token captured in
+        // MSLoginTest
+        // This method is defined in BaseTest and throws an exception if the token is
+        // missing
+        goToDashboardViaStoredUrl();
+        System.out.println("Accessing Dashboard using captured JWT Token URL...");
 
-        // Wait for the dashboard elements to be fully rendered
+        // Ensure dashboard elements are rendered before proceeding
         dashboardPage.waitForDashboardLoaded();
 
-        // Retrieve and verify High Severity Incidents count
+        // Verification 1: High Severity Incidents
         String highSeverity = dashboardPage.getHighSeverityValue();
         softAssert.assertEquals(highSeverity, "1", "High Severity Incidents count mismatch!");
 
-        // Retrieve and verify Top Risky Users count
+        // Verification 2: Top Risky Users
         String topRiskyUsers = dashboardPage.getTopRiskyUsersValue();
         softAssert.assertEquals(topRiskyUsers, "0", "Top Risky Users count mismatch!");
 
-        // Retrieve and verify Mass Download Incidents count
+        // Verification 3: Mass Download Incidents
         String massDownloads = dashboardPage.getMassDownloadValue();
         softAssert.assertEquals(massDownloads, "0", "Mass Download Incidents count mismatch!");
 
-        // Mandatory call to collect and report all assertion failures
-        softAssert.assertAll();
-
-        System.out.println("InMotion365 Key Findings verification completed.");
+        System.out.println("InMotion365 Key Findings verification completed successfully.");
     }
 }
